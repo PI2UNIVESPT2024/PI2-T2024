@@ -1,0 +1,92 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+
+const app = express();
+app.use(bodyParser.json());
+
+mongoose.connect('mongodb://localhost:27017/animal_rescue', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+const animalRoutes = require('./routes/animalRoutes');
+app.use('/api/animals', animalRoutes);
+
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
+});
+const mongoose = require('mongoose');
+
+const animalSchema = new mongoose.Schema({
+  name: String,
+  type: String,
+  description: String,
+  location: String,
+  imageUrl: String,
+  status: { type: String, enum: ['lost', 'found'], default: 'lost' },
+});
+
+module.exports = mongoose.model('Animal', animalSchema);
+
+const express = require('express');
+const router = express.Router();
+const Animal = require('../models/Animal');
+
+router.post('/', async (req, res) => {
+  const animal = new Animal(req.body);
+  await animal.save();
+  res.status(201).send(animal);
+});
+
+router.get('/', async (req, res) => {
+  const animals = await Animal.find();
+  res.send(animals);
+});
+
+module.exports = router;
+
+import React from 'react';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import EncontraMe from './pages/EncontraMe';
+import AnimalPage from './pages/AnimalPage';
+
+function App() {
+  return (
+    <Router>
+      <Switch>
+        <Route path="/" exact component={EncontraMe} />
+        <Route path="/animal/:id" component={AnimalPage} />
+      </Switch>
+    </Router>
+  );
+}
+
+export default App;
+
+
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+
+function EncontraMe() {
+  const [animals, setAnimals] = useState([]);
+
+  useEffect(() => {
+    axios.get('/api/animals').then((response) => {
+      setAnimals(response.data);
+    });
+  }, []);
+
+  return (
+    <div>
+      <h1>Animals</h1>
+      <ul>
+        {animals.map((animal) => (
+          <li key={animal._id}>{animal.name}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+
